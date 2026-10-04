@@ -1,0 +1,109 @@
+{
+  "name": "Supply Chain - Alternate Supplier RFQ & PO Dispatch",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "supply-chain-switch-supplier",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "supply-chain-switch-supplier"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "action_id",
+              "value": "={{ $json.body.action_id }}"
+            },
+            {
+              "name": "plan_name",
+              "value": "={{ $json.body.plan_name }}"
+            },
+            {
+              "name": "urgency",
+              "value": "={{ $json.body.urgency }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.body.description }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Parse Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "toEmail": "procurement-leads@global-oem.com",
+        "subject": "=🚨 URGENT: Alternate Sourcing Triggered - {{ $json.plan_name }}",
+        "text": "=Automated Supply Chain Orchestrator has executed recovery action #{{ $json.action_id }}.\n\nDetails: {{ $json.description }}\nUrgency: {{ $json.urgency }}\n\nAlternate PO requisition dispatched to ERP.",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Send Procurement Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{ $json.body.callback_url || 'http://localhost:8000/api/n8n/callback' }}",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"action_id\": {{ $json.action_id }},\n  \"status\": \"completed\",\n  \"execution_id\": \"{{ $execution.id }}\"\n}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Report Status Callback to Risk Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Payload": {
+      "main": [
+        [
+          {
+            "node": "Send Procurement Alert Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Report Status Callback to Risk Backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

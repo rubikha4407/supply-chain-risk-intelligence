@@ -1,0 +1,72 @@
+{
+  "name": "Supplier Switch Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "supply-chain-switch-supplier",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "demo_notification",
+              "value": "=\nSUPPLIER NOTIFICATION\n\nSubject:\nURGENT — Alternate Supply Activation\n\nSupplier: Supplier B\n\nComponent: Microchip X\n\nRequired quantity: 5000\n\nRequired by: 2026-10-12\n\nReason: Primary supplier disruption."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Generate Procurement Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$json.body.callback_url}}",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"action_id\": {{$json.body.action_id}},\n  \"status\": \"completed\",\n  \"execution_id\": \"{{$execution.id}}\",\n  \"message\": \"Supplier notification sent\"\n}"
+      },
+      "name": "FastAPI Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Procurement Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Procurement Email": {
+      "main": [
+        [
+          {
+            "node": "FastAPI Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
