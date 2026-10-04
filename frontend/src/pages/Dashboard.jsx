@@ -71,7 +71,7 @@ export default function Dashboard() {
           <div style={{ height: '400px', borderRadius: '8px', overflow: 'hidden' }}>
             <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%', background: '#0a0a0a' }}>
               <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="&copy; OpenStreetMap contributors"
               />
               {assessments.map(a => {
